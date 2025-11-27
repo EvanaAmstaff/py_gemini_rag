@@ -1,0 +1,40 @@
+name: Auto QA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "questions.txt"
+
+permissions:
+  contents: write
+
+jobs:
+  run-qa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run Gemini QA
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: python src/main.py
+
+      - name: Commit results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git add -A
+          git commit -m "Auto-update results" || echo "No changes"
+          git push
