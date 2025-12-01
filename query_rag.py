@@ -12,7 +12,7 @@ if not api_key:
 client = genai.Client(api_key=api_key) 
 
 # --- ストア名を設定 ---
-FILE_SEARCH_STORE_NAME = "fileSearchStores/gas-documentation-rag-store-eh3fonwv95f9" # あなたのストア名に設定済み
+FILE_SEARCH_STORE_NAME = "fileSearchStores/gas-documentation-rag-store-ftwf69nijziu" # あなたのストア名に設定済み
 
 # ▼▼▼【ここからが新しい関数】▼▼▼
 def is_question_about_gas(question: str) -> bool:
