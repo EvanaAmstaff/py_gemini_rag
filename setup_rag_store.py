@@ -13,7 +13,7 @@ client = genai.Client(api_key=api_key)
 doc_dirs = ["gas_docs_txt", "gemini_api_docs_txt"]
 
 # -----------------------------
-# 既存のストアを使用する
+# 既存ストアを使用
 # -----------------------------
 store_name = "fileSearchStores/gas-documentation-rag-store-ftwf69nijziu"
 print("📁 既存ストアにアップロードします")
@@ -32,12 +32,13 @@ for doc_directory in doc_dirs:
         file_path = os.path.join(doc_directory, filename)
         print(f"  - アップロード中: {filename}")
 
+        # display_name は使えない。file_search_store_name + file のみ
         op = client.file_search_stores.upload_to_file_search_store(
             file_search_store_name=store_name,
-            file=file_path,
-            display_name=filename,
+            file=file_path
         )
 
+        # operation 完了待ち
         while True:
             current = client.operations.get(name=op.name)
             if current.done:
@@ -46,6 +47,7 @@ for doc_directory in doc_dirs:
             time.sleep(2)
 
 print("\n✅ すべてのファイルを既存ストアにアップロードしました")
+
 
 
 
