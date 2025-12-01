@@ -1,5 +1,3 @@
-# setup_rag_store.py（完全修正版）
-
 import os
 import time
 from google import genai
@@ -19,10 +17,12 @@ doc_dirs = ["gas_docs_txt", "gemini_api_docs_txt"]
 # -----------------------------
 print("📁 ファイル検索ストアを作成しています...")
 store = client.file_search_stores.create(
-    config={"display_name": "GAS Documentation RAG Store (new SDK)"}
+    config={
+        "display_name": "GAS Documentation RAG Store (new SDK)"
+    }
 )
 
-# store.name = "projects/xxx/locations/global/fileSearchStores/abcd1234"
+# store.name = "projects/.../fileSearchStores/abcd1234"
 store_id = store.name.split("/")[-1]
 print("  - store_id =", store_id)
 
@@ -39,17 +39,15 @@ for doc_directory in doc_dirs:
         file_path = os.path.join(doc_directory, filename)
         print(f"  - アップロード中: {filename}")
 
-        # --- 正しい upload 呼び出し形式 ---
-        op = client.file_search_stores.upload_to_file_search_store(
-            file_search_store_id=store_id,
-            display_name=filename,
-            file={
-                "path": file_path,
-                "mime_type": "text/plain",
-            },
-        )
+        # 正しい upload 呼び出し形式
+        with open(file_path, "rb") as f:
+            op = client.file_search_stores.upload_to_file_search_store(
+                store_id=store_id,        # ← ここが正しい
+                display_name=filename,
+                file={"file": f},         # ← "path" ではなく "file"
+            )
 
-        # --- operation.name を使って進行監視 ---
+        # operation.name を使って進行監視
         while True:
             current = client.operations.get(name=op.name)
             if current.done:
@@ -67,3 +65,4 @@ with open("setup_rag_store_file_search_store_name.txt", "w", encoding="utf-8") a
 
 print("\n🎉 RAGの準備が完了しました")
 print("ストアID:", store_id)
+
