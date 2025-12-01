@@ -13,22 +13,14 @@ client = genai.Client(api_key=api_key)
 doc_dirs = ["gas_docs_txt", "gemini_api_docs_txt"]
 
 # -----------------------------
-# 1. File Search Store の作成
+# 既存のストアを使用する
 # -----------------------------
-print("📁 ファイル検索ストアを作成しています...")
-
-store = client.file_search_stores.create(
-    config={
-        "display_name": "GAS Documentation RAG Store (Google Gemini API)"
-    }
-)
-
-# store.name = "projects/.../fileSearchStores/xxxx"
-store_name = store.name
+store_name = "fileSearchStores/gas-documentation-rag-store-ftwf69nijziu"
+print("📁 既存ストアにアップロードします")
 print("  - store_name =", store_name)
 
 # -----------------------------
-# 2. アップロード
+# ファイルアップロード
 # -----------------------------
 for doc_directory in doc_dirs:
     print(f"\n📂 ディレクトリ '{doc_directory}' の処理開始...")
@@ -40,31 +32,20 @@ for doc_directory in doc_dirs:
         file_path = os.path.join(doc_directory, filename)
         print(f"  - アップロード中: {filename}")
 
-        # --- 正しい upload 呼び出し形式 ---
-        # file_search_store_name を使う
         op = client.file_search_stores.upload_to_file_search_store(
             file_search_store_name=store_name,
             file=file_path,
             display_name=filename,
         )
 
-        # --- operation の完了待ち ---
         while True:
             current = client.operations.get(name=op.name)
             if current.done:
                 break
             print("    - 処理中...")
-            time.sleep(3)
+            time.sleep(2)
 
-print("\n✅ すべてのファイルをアップロードしました")
+print("\n✅ すべてのファイルを既存ストアにアップロードしました")
 
-# -----------------------------
-# 3. store_name をファイル保存
-# -----------------------------
-with open("setup_rag_store_file_search_store_name.txt", "w", encoding="utf-8") as f:
-    f.write(store_name)
-
-print("\n🎉 RAGの準備が完了しました")
-print("File Search Store Name:", store_name)
 
 
