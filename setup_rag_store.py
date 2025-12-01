@@ -1,63 +1,69 @@
-# setup_rag_store.py (【最終修正版】)
+# setup_rag_store.py（完全修正版）
+
 import os
 import time
 from google import genai
 from dotenv import load_dotenv
 
-# --- .envファイルから環境変数を読み込む ---
 load_dotenv()
 
-# --- 環境変数からAPIキーを取得 ---
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    raise ValueError("APIキーが.envファイルに設定されていません。'GEMINI_API_KEY=...'と記述してください。")
+    raise ValueError("APIキーが.envファイルにありません")
 
-# --- Clientオブジェクトを作成 ---
-client = genai.Client(api_key=api_key) 
-doc_directorys = ["gas_docs_txt","gemini_api_docs_txt"]
-#doc_directorys = ["gas","gemini"]
+client = genai.Client(api_key=api_key)
+doc_dirs = ["gas_docs_txt", "gemini_api_docs_txt"]
 
-# --- 1. ファイル検索ストアの作成 ---
-print("ファイル検索ストアを作成しています...")
-file_search_store = client.file_search_stores.create(
-    config={'display_name': 'GAS Documentation RAG Store (new SDK)'}
+# -----------------------------
+# 1. File Search Store の作成
+# -----------------------------
+print("📁 ファイル検索ストアを作成しています...")
+store = client.file_search_stores.create(
+    config={"display_name": "GAS Documentation RAG Store (new SDK)"}
 )
 
-# --- 2. ディレクトリ内の全テキストファイルをアップロード ---
-print(f"'{doc_directorys}' ディレクトリからファイルのアップロードを開始します...")
-for doc_directory in doc_directorys:
+# store.name = "projects/xxx/locations/global/fileSearchStores/abcd1234"
+store_id = store.name.split("/")[-1]
+print("  - store_id =", store_id)
+
+# -----------------------------
+# 2. アップロード
+# -----------------------------
+for doc_directory in doc_dirs:
+    print(f"\n📂 ディレクトリ '{doc_directory}' の処理開始...")
+
     for filename in os.listdir(doc_directory):
-        if filename.endswith(".txt"):
-            file_path = os.path.join(doc_directory, filename)
-            print(f"  - アップロード中: {filename}")
-            
-            # 最初のアップロード操作を開始
-            operation = client.file_search_stores.upload_to_file_search_store(
-                file=file_path,
-                file_search_store_name=file_search_store.name,
-                config={'display_name': filename}
-            )
-            
-            # ▼▼▼【ここからが修正箇所】▼▼▼
+        if not filename.endswith(".txt"):
+            continue
 
-            # 操作が完了するまでループ (公式ドキュメントに準拠したシンプルな形式)
-            while not operation.done:
-                print("    - 処理中...")
-                time.sleep(5)
-                
-                # operationオブジェクト自体を渡して、最新の状態を取得する
-                operation = client.operations.get(operation)
+        file_path = os.path.join(doc_directory, filename)
+        print(f"  - アップロード中: {filename}")
 
-            # ▲▲▲【ここまでが修正箇所】▲▲▲
+        # --- 正しい upload 呼び出し形式 ---
+        op = client.file_search_stores.upload_to_file_search_store(
+            file_search_store_id=store_id,
+            display_name=filename,
+            file={
+                "path": file_path,
+                "mime_type": "text/plain",
+            },
+        )
 
-print("\n✅ すべてのファイルのアップロードとインデックス作成が完了しました。")
-print("\n🎉 RAGシステムの準備が完了しました！")
-print("以下のストア名（ID）をコピーして、質問用スクリプトに貼り付けてください。")
-print("--------------------------------------------------")
-print(file_search_store.name)
-print("--------------------------------------------------")
-# ファイルを保存
-file_path = "setup_rag_store_file_search_store_name.txt"
-with open(file_path, 'w', encoding='utf-8') as f:
-    f.write(file_search_store.name)
-print(f"  保存先: {file_path}")
+        # --- operation.name を使って進行監視 ---
+        while True:
+            current = client.operations.get(name=op.name)
+            if current.done:
+                break
+            print("    - 処理中...")
+            time.sleep(4)
+
+print("\n✅ すべてのファイルをアップロードしました")
+
+# -----------------------------
+# 3. store_id をファイルに保存
+# -----------------------------
+with open("setup_rag_store_file_search_store_name.txt", "w", encoding="utf-8") as f:
+    f.write(store_id)
+
+print("\n🎉 RAGの準備が完了しました")
+print("ストアID:", store_id)
