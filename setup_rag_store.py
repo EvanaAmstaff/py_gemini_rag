@@ -10,18 +10,19 @@ if not api_key:
     raise ValueError("APIキーが.envファイルにありません")
 
 client = genai.Client(api_key=api_key)
+
+# すでに存在する正しい store_id（あなたの環境で確認済み）
+STORE_ID = "gas-documentation-rag-store-ftwf69nijziu"
+
+# アップロードするフォルダ
 doc_dirs = ["gas_docs_txt", "gemini_api_docs_txt"]
 
-# -----------------------------
-# 既存ストアを使用
-# -----------------------------
-store_name = "fileSearchStores/gas-documentation-rag-store-ftwf69nijziu"
-print("📁 既存ストアにアップロードします")
-print("  - store_name =", store_name)
+print("📁 既存の File Search Store を使用します:")
+print("  - store_id =", STORE_ID)
 
-# -----------------------------
-# ファイルアップロード
-# -----------------------------
+# ----------------------------------------------------
+# 1. アップロード
+# ----------------------------------------------------
 for doc_directory in doc_dirs:
     print(f"\n📂 ディレクトリ '{doc_directory}' の処理開始...")
 
@@ -32,21 +33,34 @@ for doc_directory in doc_dirs:
         file_path = os.path.join(doc_directory, filename)
         print(f"  - アップロード中: {filename}")
 
-        # display_name は使えない。file_search_store_name + file のみ
+        # 新SDKの正しい upload 呼び出し（display_name は存在しない）
         op = client.file_search_stores.upload_to_file_search_store(
-            file_search_store_name=store_name,
-            file=file_path
+            file_search_store_id=STORE_ID,
+            file={
+                "path": file_path,
+                "mime_type": "text/plain",
+            },
         )
 
-        # operation 完了待ち
+        # アップロードの Operation 完了待ち
         while True:
             current = client.operations.get(name=op.name)
             if current.done:
                 break
             print("    - 処理中...")
-            time.sleep(2)
+            time.sleep(3)
 
-print("\n✅ すべてのファイルを既存ストアにアップロードしました")
+print("\n✅ すべてのファイルを正常にアップロードしました")
+
+# ----------------------------------------------------
+# 2. store_id をファイル保存
+# ----------------------------------------------------
+with open("setup_rag_store_file_search_store_name.txt", "w", encoding="utf-8") as f:
+    f.write(STORE_ID)
+
+print("\n🎉 RAGの準備が完了しました")
+print("ストアID:", STORE_ID)
+
 
 
 
