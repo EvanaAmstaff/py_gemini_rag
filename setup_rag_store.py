@@ -36,7 +36,11 @@ for doc_directory in doc_dirs:
         print(f"  - アップロード中: {filename}")
 
         # ✅ SDK完全互換形（dict禁止・keyword完全一致）
-        op = client.file_search_sto
+        op = client.file_search_stores.upload_to_file_search_store(
+           file_search_store_name=FILE_SEARCH_STORE_NAME,
+           file=file_path,
+        )
+
 
 
 
