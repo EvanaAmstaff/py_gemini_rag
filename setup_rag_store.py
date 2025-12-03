@@ -40,11 +40,13 @@ for doc_directory in doc_dirs:
 
         # 完了待ち
         while True:
-            current = client.operations.get(name=op.name)
-            if current.done:
-                break
-            print("    - 処理中...")
-            time.sleep(2)
+           current = client.operations.get(op)   # ← 文字列ではなくオブジェクト
+           if current.done:
+               break
+           print("    - 処理中...")
+           time.sleep(2)
+
+
 
 print("\n✅ すべてのファイルをアップロードしました")
 
@@ -56,6 +58,7 @@ with open("setup_rag_store_file_search_store_name.txt", "w", encoding="utf-8") a
 
 print("\n🎉 RAGの準備が完了しました")
 print("File Search Store Name:", FILE_SEARCH_STORE_NAME)
+
 
 
 
